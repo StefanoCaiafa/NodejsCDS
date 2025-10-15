@@ -10,12 +10,13 @@ API REST desarrollada con Node.js + Express + TypeScript + SQLite para la evalua
 - Arquitectura limpia con principios SOLID/GRASP
 - Documentación automática con Swagger
 - Tests unitarios con Jest
-- SQLite con migraciones automáticas
+- TypeORM con migraciones automáticas
+- Cron job para limpieza de tokens expirados
 
 ## 🛠 Stack Tecnológico
 
 **Backend:** Node.js 18 • Express • TypeScript  
-**Base de Datos:** SQLite3  
+**Base de Datos:** SQLite3 • TypeORM  
 **Autenticación:** JWT • bcrypt  
 **Documentación:** Swagger  
 **Testing:** Jest  
@@ -96,10 +97,16 @@ curl -X POST http://localhost:8000/api/logout \
 ```bash
 npm run dev          # Desarrollo con hot-reload
 npm run build        # Compilar TypeScript
-npm start            # Servidor producción
+npm start            # Servidor producción (con migraciones)
 npm test             # Ejecutar tests
 npm run lint         # Verificar código
-npm run lint:fix     # Corregir errores
+npm run lint:fix     # Corregir errores automáticamente
+npm run format       # Formatear código con Prettier
+
+# Migraciones TypeORM
+npm run migration:create src/db/migrations/MigrationName  # Crear migración
+npm run migration:run     # Ejecutar migraciones pendientes
+npm run migration:revert  # Revertir última migración
 ```
 
 ## 📋 Variables de Entorno
@@ -117,11 +124,13 @@ DB_PATH=./src/db/database.sqlite
 
 ## 🏗 Arquitectura
 
+- **TypeORM** con entidades y migraciones
 - **Patrón Repository** para acceso a datos
 - **Inyección de Dependencias** en servicios
 - **Separación en capas:** Controllers → Services → Repositories
 - **Principios SOLID** aplicados en toda la estructura
 - **Clean Code** con TypeScript strict mode
+- **Cron Jobs** para tareas programadas (limpieza de tokens)
 
 ## 🧪 Testing
 
@@ -133,11 +142,13 @@ npm test
 npm test -- AuthService.test.ts
 ```
 
-**Cobertura:** 11 tests unitarios (AuthService + CryptoUtil)
+**Cobertura:** 18 tests unitarios pasando
+- AuthService (7 tests)
+- TokenBlacklistCleanupService (7 tests)
+- CryptoUtil (4 tests)
 
-## 📚 Documentación Adicional
+## 📚 Documentación
 
-- [LOGOUT_TESTING.md](./LOGOUT_TESTING.md) - Guía completa de pruebas de logout
 - [Swagger UI](http://localhost:8000/api-docs) - Documentación interactiva
 - [OpenAPI JSON](http://localhost:8000/api-docs.json) - Especificación OpenAPI
 
