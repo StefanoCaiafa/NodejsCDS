@@ -38,7 +38,7 @@ jobs:
         env:
           NODE_ENV: test
           JWT_SECRET: test-secret-key
-          DB_PATH: :memory:
+          DB_PATH: ':memory:'
 
       - name: Check build artifacts
         run: ls -la dist/
