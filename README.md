@@ -62,7 +62,7 @@ npm start
 - `POST /api/login` - Iniciar sesión
 - `POST /api/logout` - Cerrar sesión (invalidar token)
 
-### Películas
+### Películas (requiere autenticación)
 - `GET /api/movies?keyword=fight` - Buscar películas
 
 ### Favoritos (requieren autenticación)
