@@ -1,25 +1,42 @@
+import { Repository, MoreThan } from 'typeorm';
 import { ITokenBlacklistRepository } from '../interfaces/ITokenBlacklistRepository';
 import { BlacklistedToken } from '../../modules/auth/models/BlacklistedToken';
-import { database } from '../../db/database';
+import { AppDataSource } from '../../db/data-source';
 
 export class TokenBlacklistRepository implements ITokenBlacklistRepository {
-  private tableName = 'token_blacklist';
+  private repository: Repository<BlacklistedToken>;
+
+  constructor() {
+    this.repository = AppDataSource.getRepository(BlacklistedToken);
+  }
 
   async addToBlacklist(token: string, userId: number, expiresAt: Date): Promise<void> {
-    const sql = `INSERT INTO ${this.tableName} (token, userId, expiresAt) VALUES (?, ?, ?)`;
-    await database.run(sql, [token, userId, expiresAt.toISOString()]);
+    const blacklistedToken = this.repository.create({
+      token,
+      userId,
+      expiresAt: expiresAt.toISOString(),
+    });
+    await this.repository.save(blacklistedToken);
   }
 
   async isBlacklisted(token: string): Promise<boolean> {
-    const sql = `SELECT id FROM ${this.tableName} WHERE token = ? AND expiresAt > datetime('now')`;
-    const result = await database.get<BlacklistedToken>(sql, [token]);
-    return !!result;
+    const count = await this.repository.count({
+      where: {
+        token,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        expiresAt: MoreThan(new Date().toISOString()) as any,
+      },
+    });
+    return count > 0;
   }
 
   async cleanupExpired(): Promise<number> {
-    const sql = `DELETE FROM ${this.tableName} WHERE expiresAt <= datetime('now')`;
-    const result = await database.run(sql);
-    const deletedCount = result.changes ?? 0;
-    return deletedCount;
+    const result = await this.repository
+      .createQueryBuilder()
+      .delete()
+      .from(BlacklistedToken)
+      .where('expiresAt <= datetime("now")')
+      .execute();
+    return result.affected ?? 0;
   }
 }

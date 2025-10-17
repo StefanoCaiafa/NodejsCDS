@@ -3,7 +3,7 @@ import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import { swaggerSpec } from './config/swagger';
-import { database } from './db/database';
+import { AppDataSource } from './db/data-source';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { TokenBlacklistRepository } from './core/data/TokenBlacklistRepository';
 import { TokenBlacklistCleanupService } from './modules/auth/services/TokenBlacklistCleanupService';
@@ -23,7 +23,10 @@ export class Server {
   }
 
   async initialize(): Promise<void> {
-    await database.initialize();
+    // Initialize TypeORM DataSource
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
 
     this.setupMiddleware();
 
@@ -139,6 +142,8 @@ export class Server {
       this.cleanupService.stop();
     }
 
-    await database.close();
+    if (AppDataSource.isInitialized) {
+      await AppDataSource.destroy();
+    }
   }
 }

@@ -1,88 +1,52 @@
+import { Repository, FindOptionsWhere, ObjectLiteral, DeepPartial } from 'typeorm';
 import { IDataAccess } from '../interfaces/IDataAccess';
-import { database } from '../../db/database';
+import { AppDataSource } from '../../db/data-source';
 
-export abstract class DataAccess<T> implements IDataAccess<T> {
-  protected tableName: string;
+export abstract class BaseRepository<T extends ObjectLiteral> implements IDataAccess<T> {
+  protected repository: Repository<T>;
 
-  constructor(tableName: string) {
-    this.tableName = tableName;
-  }
-
-  protected buildWhereClause(criteria: Partial<T>): {
-    clause: string;
-    values: (string | number | boolean | null)[];
-  } {
-    const keys = Object.keys(criteria);
-    if (keys.length === 0) {
-      return { clause: '', values: [] };
-    }
-
-    const conditions = keys.map((key) => `${key} = ?`);
-    const values = keys.map((key) => criteria[key as keyof T] as string | number | boolean | null);
-
-    return {
-      clause: `WHERE ${conditions.join(' AND ')}`,
-      values,
-    };
+  constructor(entityClass: new () => T) {
+    this.repository = AppDataSource.getRepository(entityClass);
   }
 
   async create(entity: Partial<T>): Promise<T> {
-    const keys = Object.keys(entity);
-    const values = Object.values(entity) as (string | number | boolean | null)[];
-    const placeholders = keys.map(() => '?').join(', ');
-
-    const sql = `INSERT INTO ${this.tableName} (${keys.join(', ')}) VALUES (${placeholders})`;
-    const result = await database.run(sql, values);
-
-    const created = await this.findById(result.lastID!);
-    if (!created) {
-      throw new Error('Failed to retrieve created record');
-    }
-
-    return created;
+    const newEntity = this.repository.create(entity as DeepPartial<T>);
+    return await this.repository.save(newEntity);
   }
 
   async findById(id: number): Promise<T | undefined> {
-    const sql = `SELECT * FROM ${this.tableName} WHERE id = ?`;
-    const result = await database.get<T>(sql, [id]);
-    return result;
+    return (
+      (await this.repository.findOne({
+        where: { id } as unknown as FindOptionsWhere<T>,
+      })) ?? undefined
+    );
   }
 
   async findAll(criteria?: Partial<T>): Promise<T[]> {
-    let sql = `SELECT * FROM ${this.tableName}`;
-    let params: (string | number | boolean | null)[] = [];
-
     if (criteria) {
-      const where = this.buildWhereClause(criteria);
-      sql += ` ${where.clause}`;
-      params = where.values;
+      return await this.repository.find({
+        where: criteria as unknown as FindOptionsWhere<T>,
+      });
     }
-
-    const results = await database.all<T>(sql, params);
-    return results;
+    return await this.repository.find();
   }
 
   async update(id: number, entity: Partial<T>): Promise<T | undefined> {
-    const keys = Object.keys(entity);
-    const values = Object.values(entity) as (string | number | boolean | null)[];
-    const setClause = keys.map((key) => `${key} = ?`).join(', ');
-
-    const sql = `UPDATE ${this.tableName} SET ${setClause}, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`;
-    await database.run(sql, [...values, id]);
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await this.repository.update(id, entity as any);
     return await this.findById(id);
   }
 
   async delete(id: number): Promise<boolean> {
-    const sql = `DELETE FROM ${this.tableName} WHERE id = ?`;
-    const result = await database.run(sql, [id]);
-    return (result.changes ?? 0) > 0;
+    const result = await this.repository.delete(id);
+    return (result.affected ?? 0) > 0;
   }
 
   async findOne(criteria: Partial<T>): Promise<T | undefined> {
-    const where = this.buildWhereClause(criteria);
-    const sql = `SELECT * FROM ${this.tableName} ${where.clause} LIMIT 1`;
-    const result = await database.get<T>(sql, where.values);
-    return result;
+    return (
+      (await this.repository.findOne({
+        where: criteria as unknown as FindOptionsWhere<T>,
+      })) ?? undefined
+    );
   }
 }

@@ -1,10 +1,10 @@
-import { DataAccess } from './DataAccess';
+import { BaseRepository } from './DataAccess';
 import { IUserRepository } from '../interfaces/IUserRepository';
 import { User } from '../../modules/auth/models/User';
 
-export class UserRepository extends DataAccess<User> implements IUserRepository {
+export class UserRepository extends BaseRepository<User> implements IUserRepository {
   constructor() {
-    super('users');
+    super(User);
   }
 
   async findByEmail(email: string): Promise<User | undefined> {
@@ -12,7 +12,7 @@ export class UserRepository extends DataAccess<User> implements IUserRepository 
   }
 
   async emailExists(email: string): Promise<boolean> {
-    const user = await this.findByEmail(email);
-    return !!user;
+    const count = await this.repository.count({ where: { email } });
+    return count > 0;
   }
 }
