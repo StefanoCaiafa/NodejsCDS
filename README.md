@@ -166,8 +166,4 @@ npm test -- AuthService.test.ts
 
 - [Swagger UI](http://localhost:8000/api-docs) - Documentación interactiva
 - [OpenAPI JSON](http://localhost:8000/api-docs.json) - Especificación OpenAPI
-
-## 👤 Autor
-
-**Stefano Caiafa**  
-Proyecto desarrollado para evaluación técnica de **CodigoDelSur**
+- [Postman Collection](postman_collection.json) - Colección de pruebas Postman
