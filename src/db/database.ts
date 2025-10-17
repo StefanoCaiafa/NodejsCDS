@@ -2,7 +2,6 @@ import sqlite3 from 'sqlite3';
 import fs from 'fs';
 import path from 'path';
 import { env } from '../config/env';
-import { logger } from '../utils/logger';
 
 export class Database {
   private static instance: Database;
@@ -18,29 +17,20 @@ export class Database {
   }
 
   public async initialize(): Promise<void> {
-    try {
-      const dbPath = path.resolve(env.DB_PATH);
-      const dbDir = path.dirname(dbPath);
+    const dbPath = path.resolve(env.DB_PATH);
+    const dbDir = path.dirname(dbPath);
 
-      if (!fs.existsSync(dbDir)) {
-        fs.mkdirSync(dbDir, { recursive: true });
-      }
-
-      this.db = new sqlite3.Database(dbPath, (err) => {
-        if (err) {
-          logger.error('Error connecting to database:', err);
-          throw err;
-        }
-        logger.info('Connected to SQLite database');
-      });
-
-      await this.run('PRAGMA foreign_keys = ON');
-
-      logger.info('Database initialized successfully');
-    } catch (error) {
-      logger.error('Failed to initialize database:', error);
-      throw error;
+    if (!fs.existsSync(dbDir)) {
+      fs.mkdirSync(dbDir, { recursive: true });
     }
+
+    this.db = new sqlite3.Database(dbPath, (err) => {
+      if (err) {
+        throw err;
+      }
+    });
+
+    await this.run('PRAGMA foreign_keys = ON');
   }
 
   public getDb(): sqlite3.Database {
@@ -105,7 +95,6 @@ export class Database {
           if (err) {
             reject(err);
           } else {
-            logger.info('Database connection closed');
             resolve();
           }
         });

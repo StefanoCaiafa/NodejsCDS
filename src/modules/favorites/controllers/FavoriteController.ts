@@ -9,14 +9,19 @@ export class FavoriteController {
   addFavorite = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       const userId = req.user!.userId;
-      const movieData = req.body;
+      const { movieId } = req.body;
 
-      if (!movieData || !movieData.id || !movieData.title) {
-        ResponseBuilder.error(res, 'Invalid movie data. ID and title are required.', 400);
+      if (movieId === undefined || movieId === null) {
+        ResponseBuilder.error(res, 'Invalid request. movieId is required.', 400);
         return;
       }
 
-      const favorite = await this.favoriteService.addFavorite(userId, movieData);
+      if (typeof movieId !== 'number' || !Number.isInteger(movieId) || movieId <= 0) {
+        ResponseBuilder.error(res, 'Invalid request. movieId must be a positive integer.', 400);
+        return;
+      }
+
+      const favorite = await this.favoriteService.addFavorite(userId, { movieId });
 
       ResponseBuilder.created(res, favorite, 'Movie added to favorites');
     } catch (error) {

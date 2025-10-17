@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { ResponseBuilder } from '../utils/responseBuilder';
-import { logger } from '../utils/logger';
 import { TokenBlacklistRepository } from '../core/data/TokenBlacklistRepository';
 
 const tokenBlacklistRepository = new TokenBlacklistRepository();
@@ -33,7 +32,6 @@ export const authMiddleware = async (
 
     const isBlacklisted = await tokenBlacklistRepository.isBlacklisted(token);
     if (isBlacklisted) {
-      logger.warn('Blacklisted token attempted to be used');
       ResponseBuilder.unauthorized(res, 'Token has been revoked');
       return;
     }
@@ -45,18 +43,15 @@ export const authMiddleware = async (
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
-      logger.warn('Invalid token:', error.message);
       ResponseBuilder.unauthorized(res, 'Invalid token');
       return;
     }
 
     if (error instanceof jwt.TokenExpiredError) {
-      logger.warn('Token expired:', error.message);
       ResponseBuilder.unauthorized(res, 'Token expired');
       return;
     }
 
-    logger.error('Authentication error:', error);
     ResponseBuilder.internalError(res, 'Authentication failed');
   }
 };

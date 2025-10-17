@@ -132,6 +132,21 @@ DB_PATH=./src/db/database.sqlite
 - **Clean Code** con TypeScript strict mode
 - **Cron Jobs** para tareas programadas (limpieza de tokens)
 
+### Diagrama de Base de Datos
+
+![Database Diagram](images/database-diagram.png)
+
+**Tablas:** `token_blacklist`, `users`, `favorites`, `migrations`
+
+### 🔍 Inspeccionar Base de Datos
+
+```bash
+# Copiar BD del container a local
+docker cp codigodelsur-backend:/app/src/db/database.sqlite ./database.sqlite
+```
+
+Luego abrir `database.sqlite` con DBeaver, DB Browser o cualquier cliente SQLite.
+
 ## 🧪 Testing
 
 ```bash

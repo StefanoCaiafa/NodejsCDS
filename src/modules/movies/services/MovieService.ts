@@ -1,11 +1,9 @@
 import axios from 'axios';
-import fs from 'fs';
-import path from 'path';
 import { Movie } from '../models/Movie';
 import { TMDBMovieResponse } from '../models/TMDBResponse';
 import { MovieDto } from '../dtos/MovieDto';
 import { env } from '../../../config/env';
-import { logger } from '../../../utils/logger';
+import { AppError } from '../../../middleware/errorHandler';
 
 export class MovieService {
   private tmdbApiUrl: string;
@@ -14,30 +12,48 @@ export class MovieService {
   constructor() {
     this.tmdbApiUrl = env.TMDB_API_URL;
     this.tmdbApiKey = env.TMDB_API_KEY;
+
+    if (!this.tmdbApiKey) {
+      throw new AppError('TMDB API key not configured', 500);
+    }
   }
 
   async searchMovies(keyword?: string): Promise<MovieDto[]> {
+    const movies = await this.fetchFromTMDB(keyword);
+    const moviesWithScores = this.addSuggestionScores(movies);
+    const sortedMovies = this.sortBySuggestionScore(moviesWithScores);
+
+    return sortedMovies.map(this.mapToDto);
+  }
+
+  async getMovieById(movieId: number): Promise<Movie> {
+    const endpoint = `${this.tmdbApiUrl}/movie/${movieId}`;
+
     try {
-      let movies: Movie[] = [];
+      const response = await axios.get<Movie>(endpoint, {
+        params: {
+          language: 'en-US',
+        },
+        headers: {
+          Authorization: `Bearer ${this.tmdbApiKey}`,
+        },
+        timeout: 5000,
+      });
 
-      if (this.tmdbApiKey) {
-        try {
-          movies = await this.fetchFromTMDB(keyword);
-        } catch (error) {
-          logger.warn('TMDB API unavailable, using local fallback');
-          movies = await this.fetchFromLocalFallback();
-        }
-      } else {
-        logger.warn('TMDB API key not configured, using local fallback');
-        movies = await this.fetchFromLocalFallback();
-      }
-
-      const moviesWithScores = this.addSuggestionScores(movies);
-      const sortedMovies = this.sortBySuggestionScore(moviesWithScores);
-
-      return sortedMovies.map(this.mapToDto);
+      return response.data;
     } catch (error) {
-      logger.error('Error searching movies:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          throw new AppError(`Movie with ID ${movieId} not found in TMDB database`, 404);
+        }
+        if (error.response?.status === 401) {
+          throw new AppError('TMDB API authentication failed', 500);
+        }
+        throw new AppError(
+          `Failed to fetch movie from TMDB: ${error.message}`,
+          error.response?.status || 500,
+        );
+      }
       throw error;
     }
   }
@@ -64,24 +80,7 @@ export class MovieService {
       timeout: 5000,
     });
 
-    logger.info(`Fetched ${response.data.results.length} movies from TMDB`);
     return response.data.results;
-  }
-
-  private async fetchFromLocalFallback(): Promise<Movie[]> {
-    try {
-      // In development: src/modules/movies/services -> ../../../../data/movies.json
-      // In production: dist/modules/movies/services -> ../../../../data/movies.json
-      const fallbackPath = path.join(__dirname, '../../../../data/movies.json');
-      const data = fs.readFileSync(fallbackPath, 'utf-8');
-      const parsed = JSON.parse(data);
-
-      logger.info('Loaded movies from local fallback');
-      return parsed.results || parsed;
-    } catch (error) {
-      logger.error('Error reading local fallback:', error);
-      return [];
-    }
   }
 
   private addSuggestionScores(movies: Movie[]): (Movie & { suggestionScore: number })[] {

@@ -25,26 +25,15 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
- *               - id
- *               - title
+ *               - movieId
  *             properties:
- *               id:
+ *               movieId:
  *                 type: integer
+ *                 description: The TMDB movie ID to add to favorites
  *                 example: 550
- *               title:
- *                 type: string
- *                 example: Fight Club
- *               overview:
- *                 type: string
- *               poster_path:
- *                 type: string
- *               release_date:
- *                 type: string
- *               vote_average:
- *                 type: number
  *     responses:
  *       201:
- *         description: Movie added to favorites successfully
+ *         description: Movie added to favorites successfully. Movie details are fetched from TMDB and stored with addedAt timestamp.
  *         content:
  *           application/json:
  *             schema:
@@ -55,13 +44,19 @@ const router = Router();
  *                     data:
  *                       $ref: '#/components/schemas/Favorite'
  *       400:
- *         description: Bad request - Movie already in favorites or invalid data
+ *         description: Bad request - Movie already in favorites or invalid movieId
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized - Valid authentication token required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       404:
+ *         description: Movie not found in TMDB database
  *         content:
  *           application/json:
  *             schema:

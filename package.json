@@ -6,8 +6,7 @@
   "scripts": {
     "start": "npm run migration:run && node dist/index.js",
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc && npm run copy-files",
-    "copy-files": "node -e \"const fs = require('fs'); const path = require('path'); if (fs.existsSync('data')) { const dest = 'dist/data'; fs.mkdirSync(dest, { recursive: true }); fs.readdirSync('data').forEach(file => fs.copyFileSync(path.join('data', file), path.join(dest, file))); }\"",
+    "build": "tsc",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",

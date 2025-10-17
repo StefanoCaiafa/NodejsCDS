@@ -1,66 +1,55 @@
 import { IFavoriteRepository } from '../../../core/interfaces/IFavoriteRepository';
 import { Favorite } from '../models/Favorite';
 import { FavoriteDto, AddFavoriteDto } from '../dtos/FavoriteDto';
-import { logger } from '../../../utils/logger';
 import { AppError } from '../../../middleware/errorHandler';
+import { MovieService } from '../../movies/services/MovieService';
 
 export class FavoriteService {
-  constructor(private favoriteRepository: IFavoriteRepository) {}
+  private movieService: MovieService;
 
-  async addFavorite(userId: number, movieDto: AddFavoriteDto): Promise<Favorite> {
-    try {
-      const alreadyFavorited = await this.favoriteRepository.isFavorited(userId, movieDto.id);
-      if (alreadyFavorited) {
-        throw new AppError('Movie already in favorites', 400);
-      }
+  constructor(private favoriteRepository: IFavoriteRepository) {
+    this.movieService = new MovieService();
+  }
 
-      const favorite = await this.favoriteRepository.create({
-        userId,
-        movieId: movieDto.id,
-        title: movieDto.title,
-        overview: movieDto.overview || null,
-        posterPath: movieDto.poster_path || null,
-        releaseDate: movieDto.release_date || null,
-        voteAverage: movieDto.vote_average || null,
-        movieData: JSON.stringify(movieDto),
-      });
-
-      logger.info(`User ${userId} added movie ${movieDto.id} to favorites`);
-      return favorite;
-    } catch (error) {
-      logger.error('Error adding favorite:', error);
-      throw error;
+  async addFavorite(userId: number, dto: AddFavoriteDto): Promise<Favorite> {
+    const alreadyFavorited = await this.favoriteRepository.isFavorited(userId, dto.movieId);
+    if (alreadyFavorited) {
+      throw new AppError('Movie already in favorites', 400);
     }
+
+    const movieData = await this.movieService.getMovieById(dto.movieId);
+
+    const favorite = await this.favoriteRepository.create({
+      userId,
+      movieId: movieData.id,
+      title: movieData.title,
+      overview: movieData.overview || null,
+      posterPath: movieData.poster_path || null,
+      releaseDate: movieData.release_date || null,
+      voteAverage: movieData.vote_average || null,
+      movieData: JSON.stringify(movieData),
+    });
+
+    return favorite;
   }
 
   async getFavorites(userId: number): Promise<FavoriteDto[]> {
-    try {
-      const favorites = await this.favoriteRepository.findByUserId(userId);
+    const favorites = await this.favoriteRepository.findByUserId(userId);
 
-      const favoritesWithScores = this.addSuggestionScores(favorites);
-      const sortedFavorites = this.sortByScore(favoritesWithScores);
+    const favoritesWithScores = this.addSuggestionScores(favorites);
+    const sortedFavorites = this.sortByScore(favoritesWithScores);
 
-      return sortedFavorites.map(this.mapToDto);
-    } catch (error) {
-      logger.error('Error getting favorites:', error);
-      throw error;
-    }
+    return sortedFavorites.map(this.mapToDto);
   }
 
   async removeFavorite(userId: number, movieId: number): Promise<boolean> {
-    try {
-      const removed = await this.favoriteRepository.removeByUserAndMovie(userId, movieId);
+    const removed = await this.favoriteRepository.removeByUserAndMovie(userId, movieId);
 
-      if (!removed) {
-        throw new AppError('Favorite not found', 404);
-      }
-
-      logger.info(`User ${userId} removed movie ${movieId} from favorites`);
-      return removed;
-    } catch (error) {
-      logger.error('Error removing favorite:', error);
-      throw error;
+    if (!removed) {
+      throw new AppError('Favorite not found', 404);
     }
+
+    return removed;
   }
 
   private addSuggestionScores(

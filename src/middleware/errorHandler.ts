@@ -1,5 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { logger } from '../utils/logger';
 import { ResponseBuilder } from '../utils/responseBuilder';
 
 export class AppError extends Error {
@@ -15,17 +14,10 @@ export class AppError extends Error {
 
 export const errorHandler = (
   err: Error | AppError,
-  req: Request,
+  _req: Request,
   res: Response,
   _next: NextFunction,
 ): void => {
-  logger.error('Error occurred:', {
-    message: err.message,
-    stack: err.stack,
-    url: req.url,
-    method: req.method,
-  });
-
   if (err instanceof AppError) {
     ResponseBuilder.error(res, err.message, err.statusCode);
     return;

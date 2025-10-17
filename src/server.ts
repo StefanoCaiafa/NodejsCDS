@@ -4,7 +4,6 @@ import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import { swaggerSpec } from './config/swagger';
 import { database } from './db/database';
-import { logger } from './utils/logger';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { TokenBlacklistRepository } from './core/data/TokenBlacklistRepository';
 import { TokenBlacklistCleanupService } from './modules/auth/services/TokenBlacklistCleanupService';
@@ -24,22 +23,15 @@ export class Server {
   }
 
   async initialize(): Promise<void> {
-    try {
-      await database.initialize();
+    await database.initialize();
 
-      this.setupMiddleware();
+    this.setupMiddleware();
 
-      this.setupRoutes();
+    this.setupRoutes();
 
-      this.setupErrorHandling();
+    this.setupErrorHandling();
 
-      this.setupTokenCleanup();
-
-      logger.info('Server initialized successfully');
-    } catch (error) {
-      logger.error('Failed to initialize server:', error);
-      throw error;
-    }
+    this.setupTokenCleanup();
   }
 
   private setupMiddleware(): void {
@@ -51,10 +43,29 @@ export class Server {
     );
 
     this.app.use(express.json());
+
+    this.app.use(
+      (
+        err: Error,
+        _req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+      ): void => {
+        if (err instanceof SyntaxError && 'body' in err) {
+          res.status(400).json({
+            success: false,
+            error: 'Invalid JSON format in request body',
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+        next(err);
+      },
+    );
+
     this.app.use(express.urlencoded({ extended: true }));
 
-    this.app.use((req, _res, next) => {
-      logger.info(`${req.method} ${req.url}`);
+    this.app.use((_req, _res, next) => {
       next();
     });
   }
@@ -109,16 +120,11 @@ export class Server {
     this.cleanupService = new TokenBlacklistCleanupService(tokenBlacklistRepository);
 
     this.cleanupService.start('0 * * * *');
-
-    logger.info('Token blacklist cleanup service initialized');
   }
 
   async start(): Promise<void> {
     return new Promise((resolve) => {
       this.app.listen(this.port, () => {
-        logger.info(`Server running on port ${this.port}`);
-        logger.info(`API Documentation: http://localhost:${this.port}/api-docs`);
-        logger.info(`Swagger JSON: http://localhost:${this.port}/api-docs.json`);
         resolve();
       });
     });
@@ -129,13 +135,10 @@ export class Server {
   }
 
   async shutdown(): Promise<void> {
-    logger.info('Shutting down server...');
-
     if (this.cleanupService) {
       this.cleanupService.stop();
     }
 
     await database.close();
-    logger.info('Server shut down successfully');
   }
 }

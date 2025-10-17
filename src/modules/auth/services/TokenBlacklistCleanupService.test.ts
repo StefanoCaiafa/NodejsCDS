@@ -1,14 +1,6 @@
 import { TokenBlacklistCleanupService } from './TokenBlacklistCleanupService';
 import { ITokenBlacklistRepository } from '../../../core/interfaces/ITokenBlacklistRepository';
 
-jest.mock('../../../utils/logger', () => ({
-  logger: {
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-  },
-}));
-
 describe('TokenBlacklistCleanupService', () => {
   let cleanupService: TokenBlacklistCleanupService;
   let mockRepository: jest.Mocked<ITokenBlacklistRepository>;

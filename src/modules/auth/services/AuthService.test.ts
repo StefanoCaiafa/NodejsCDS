@@ -6,7 +6,6 @@ import { CryptoUtil } from '../../../utils/crypto';
 import jwt from 'jsonwebtoken';
 
 jest.mock('../../../utils/crypto');
-jest.mock('../../../utils/logger');
 jest.mock('jsonwebtoken');
 
 describe('AuthService', () => {
