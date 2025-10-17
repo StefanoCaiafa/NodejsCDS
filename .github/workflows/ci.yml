@@ -57,7 +57,7 @@ jobs:
       - name: Test Docker image
         run: |
           docker run -d -p 8000:8000 --name test-container codigodelsur-backend:latest
-          sleep 10
+          sleep 30
           curl -f http://localhost:8000/health || exit 1
           docker stop test-container
           docker rm test-container
