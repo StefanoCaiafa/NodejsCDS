@@ -4,7 +4,7 @@ import { runPendingMigrations } from './db/migrationRunner';
 
 async function bootstrap(): Promise<void> {
   try {
-    if (process.env.NODE_ENV !== 'test') {
+    if (process.env.NODE_ENV !== 'test' && process.env.NODE_ENV !== 'production') {
       await runPendingMigrations();
     }
 

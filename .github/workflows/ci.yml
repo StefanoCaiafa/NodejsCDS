@@ -56,8 +56,9 @@ jobs:
 
       - name: Test Docker image
         run: |
+          cp .env.example .env
           docker run -d -p 8000:8000 --name test-container codigodelsur-backend:latest
-          sleep 30
+          sleep 10
           curl -f http://localhost:8000/health || exit 1
           docker stop test-container
           docker rm test-container
