@@ -60,7 +60,7 @@ npm start
 ### Autenticación
 - `POST /api/register` - Registrar usuario
 - `POST /api/login` - Iniciar sesión
-- `POST /api/logout` - Cerrar sesión (invalidar token)
+- `POST /api/logout` - Cerrar sesión (invalidar token, requiere el token en el header)
 
 ### Películas (requiere autenticación)
 - `GET /api/movies?keyword=fight` - Buscar películas
