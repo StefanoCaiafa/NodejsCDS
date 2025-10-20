@@ -69,28 +69,6 @@ npm start
 - `POST /api/favorites` - Agregar favorito
 - `DELETE /api/favorites/:movieId` - Eliminar favorito
 
-## 🧪 Prueba Rápida
-
-```bash
-# 1. Registrar usuario
-curl -X POST http://localhost:8000/api/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","firstName":"Test","lastName":"User","password":"Test123!"}'
-
-# 2. Login (guardar el token)
-curl -X POST http://localhost:8000/api/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"Test123!"}'
-
-# 3. Buscar películas (reemplazar YOUR_TOKEN)
-curl -X GET "http://localhost:8000/api/movies?keyword=matrix" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# 4. Logout
-curl -X POST http://localhost:8000/api/logout \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
 ## 🧰 Scripts Disponibles
 
 ```bash
@@ -108,26 +86,11 @@ npm run migration:run     # Ejecutar migraciones pendientes
 npm run migration:revert  # Revertir última migración
 ```
 
-## 📋 Variables de Entorno
-
-Archivo `.env` (ya incluido):
-
-```env
-PORT=8000
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_EXPIRES_IN=24h
-TMDB_API_KEY=eyJhbGci...  # Token de TheMovieDB
-TMDB_API_URL=https://api.themoviedb.org/3
-DB_PATH=./src/db/database.sqlite
-```
-
 ## 🏗 Arquitectura
 
 - **TypeORM** con entidades y migraciones
-- **Patrón Repository** para acceso a datos
 - **Inyección de Dependencias** en servicios
 - **Separación en capas:** Controllers → Services → Repositories
-- **Principios SOLID** aplicados en toda la estructura
 - **Clean Code** con TypeScript strict mode
 - **Cron Jobs** para tareas programadas (limpieza de tokens)
 
