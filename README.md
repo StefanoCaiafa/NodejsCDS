@@ -7,10 +7,9 @@ API REST desarrollada con Node.js + Express + TypeScript + SQLite para la evalua
 - Registro y autenticación de usuarios con JWT + token blacklist (logout)
 - Búsqueda de películas desde TheMovieDB API
 - Gestión de películas favoritas por usuario
-- Arquitectura limpia con principios SOLID/GRASP
 - Documentación automática con Swagger
 - Tests unitarios con Jest
-- TypeORM con migraciones automáticas
+- TypeORM con migraciones
 - Cron job para limpieza de tokens expirados
 
 ## 🛠 Stack Tecnológico
@@ -154,13 +153,13 @@ Luego abrir `database.sqlite` con DBeaver, DB Browser o cualquier cliente SQLite
 npm test
 
 # Tests específicos
-npm test -- AuthService.test.ts
+npm test -- FavoriteController.test.ts
+npm test -- MovieController.test.ts
 ```
 
-**Cobertura:** 18 tests unitarios pasando
-- AuthService (7 tests)
-- TokenBlacklistCleanupService (7 tests)
-- CryptoUtil (4 tests)
+**Cobertura:** 17 tests unitarios pasando
+- FavoriteController (12 tests)
+- MovieController (5 tests)
 
 ## 📚 Documentación
 
